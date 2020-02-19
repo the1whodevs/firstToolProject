@@ -1,4 +1,7 @@
-﻿using UnityEditor;
+﻿using System;
+using System.Collections;
+using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 
 [CustomEditor(typeof(TerrainGenerator))]
@@ -10,25 +13,15 @@ public class TerrainGeneratorEditor : Editor
     /// </summary>
     private SerializedProperty GroundMaterial;
 
-    ///// <summary>
-    ///// Ideally used for top-down view, this should be the top-left corner of the terrain.
-    ///// </summary>
-    //private SerializedProperty TopLeftCorner;
+    /// <summary>
+    /// The size of the terrain on the x axis, as seen for top-down view.
+    /// </summary>
+    private SerializedProperty xSize;
 
-    ///// <summary>
-    ///// Ideally used for top-down view, this should be the top-right corner of the terrain.
-    ///// </summary>
-    //private SerializedProperty TopRightCorner;
-
-    ///// <summary>
-    ///// Ideally used for top-down view, this should be the bottom-left corner of the terrain.
-    ///// </summary>
-    //private SerializedProperty BottomLeftCorner;
-
-    ///// <summary>
-    ///// Ideally used for top-down view, this should be the bottom-right corner of the terrain.
-    ///// </summary>
-    //private SerializedProperty BottomRightCorner;
+    /// <summary>
+    /// The size of the terrain on the z axis, as seen for top-down view.
+    /// </summary>
+    private SerializedProperty zSize;
 
     /// <summary>
     /// The number of subdivisions the terrain will have. The higher this number is
@@ -46,9 +39,15 @@ public class TerrainGeneratorEditor : Editor
     /// </summary>
     private SerializedProperty maxHeight;
 
-    //bool cornerFoldout = true;
+    private SerializedProperty seed;
+
+    float div;
 
     private GameObject terrainGameObject;
+
+    private Vector3[] vertices;
+
+    private int[] triangles;
 
     private Mesh mesh;
 
@@ -60,10 +59,10 @@ public class TerrainGeneratorEditor : Editor
     {
         GroundMaterial = serializedObject.FindProperty("GroundMaterial");
 
-        //TopLeftCorner = serializedObject.FindProperty("TopLeftCorner");
-        //TopRightCorner = serializedObject.FindProperty("TopRightCorner");
-        //BottomLeftCorner = serializedObject.FindProperty("BottomLeftCorner");
-        //BottomRightCorner = serializedObject.FindProperty("BottomRightCorner");
+        xSize = serializedObject.FindProperty("xSize");
+        zSize = serializedObject.FindProperty("zSize");
+
+        seed = serializedObject.FindProperty("seed");
 
         Subdivisions = serializedObject.FindProperty("Subdivisions");
 
@@ -95,7 +94,15 @@ public class TerrainGeneratorEditor : Editor
 
         EditorGUILayout.BeginVertical();
 
+        //seed.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Seed"), seed.intValue);
+        EditorGUILayout.PropertyField(seed, new GUIContent("Seed"));
+
         EditorGUILayout.PropertyField(GroundMaterial, new GUIContent("Ground Material"));
+
+        EditorGUILayout.Space();
+
+        xSize.intValue = EditorGUILayout.DelayedIntField(new GUIContent("X-Axis"), xSize.intValue);
+        zSize.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Z-Axis"), zSize.intValue);
 
         EditorGUILayout.Space();
 
@@ -110,6 +117,8 @@ public class TerrainGeneratorEditor : Editor
 
         serializedObject.ApplyModifiedProperties();
 
+        div = 1 / seed.floatValue;
+
         if (GUILayout.Button("Generate Terrain"))
         {
             GenerateTerrain();
@@ -120,64 +129,67 @@ public class TerrainGeneratorEditor : Editor
 
     private void GenerateTerrain()
     {
+        // First make the new vertex array
+        CreateVertices();
+
+        // Then create the needed triangles
+        CreateTriangles();
+
         mesh = new Mesh();
-
-        int tilesPerAxis = Subdivisions.intValue;
-        int vertsPerAxis = tilesPerAxis + 1;
-
-        int numVerts = vertsPerAxis * vertsPerAxis;
-        int numTris = tilesPerAxis * tilesPerAxis * 2;
-
-        float tileWidth = 2.0f / tilesPerAxis;
-
-        Vector3[] vertices = new Vector3[numVerts];
-
-        for (int ix = 0; ix <= vertsPerAxis - 1; ix++)
-        {
-            for (int iy = 0; iy <= vertsPerAxis - 1; iy++)
-            {
-                float x = tileWidth * ix - 1;
-                float y = tileWidth * iy - 1;
-
-                float h = Random.Range(minHeight.floatValue, maxHeight.floatValue);
-                //float h = Mathf.PerlinNoise(x, y) * height;
-
-                Vector3 vert = new Vector3(x, h, y);
-
-                int i = iy * vertsPerAxis + ix;
-                vertices[i] = vert;
-            }
-        }
-
         mesh.vertices = vertices;
-
-        int[] triangles = new int[numTris * 6];
-
-        for (int iy = 0; iy <= vertsPerAxis - 2; iy++)
-        {
-            for (int ix = 0; ix <= vertsPerAxis - 2; ix++)
-            {
-                int A = iy * vertsPerAxis + ix;
-                int B = iy * vertsPerAxis + ix + 1;
-                int C = (iy + 1) * vertsPerAxis + ix;
-                int D = (iy + 1) * vertsPerAxis + ix + 1;
-                int i = (iy * (vertsPerAxis - 1) + ix) * 6;
-
-                triangles[i + 0] = A;
-                triangles[i + 1] = C;
-                triangles[i + 2] = B;
-                triangles[i + 3] = B;
-                triangles[i + 4] = C;
-                triangles[i + 5] = D;
-            }
-        }
-
         mesh.triangles = triangles;
 
-        mesh.RecalculateNormals();
-
-        meshFilter.mesh = mesh;
+        meshFilter.sharedMesh = mesh;
         meshRenderer.sharedMaterial = (Material)GroundMaterial.objectReferenceValue;
         meshCollider.sharedMesh = mesh;
+
+        mesh.RecalculateNormals();
+    }
+
+    private void CreateVertices()
+    {
+        vertices = new Vector3[(xSize.intValue + 1) * (zSize.intValue + 1)];
+
+        int currentIndex = 0;
+
+        // Then iterate through all needed vertices and set their position
+        for (int z = 0; z <= zSize.intValue; z++)
+        {
+            for (int x = 0; x <= xSize.intValue; x++)
+            {
+                float height = Mathf.PerlinNoise(x * div, z * div) * 2.0f;
+                vertices[currentIndex] = new Vector3(x, height, z);
+
+                currentIndex++;
+            }
+        }
+    }
+
+
+    private void CreateTriangles()
+    {
+        triangles = new int[xSize.intValue * zSize.intValue * 6];
+
+        int currentVertex = 0;
+        int numOfTriangles = 0;
+
+        for (int z = 0; z < zSize.intValue; z++)
+        {
+            for (int x = 0; x < xSize.intValue; x++)
+            {
+
+                triangles[numOfTriangles] = currentVertex + 0;
+                triangles[numOfTriangles + 1] = currentVertex + xSize.intValue + 1;
+                triangles[numOfTriangles + 2] = currentVertex + 1;
+                triangles[numOfTriangles + 3] = currentVertex + 1;
+                triangles[numOfTriangles + 4] = currentVertex + xSize.intValue + 1;
+                triangles[numOfTriangles + 5] = currentVertex + xSize.intValue + 2;
+
+                currentVertex++;
+                numOfTriangles += 6;
+            }
+
+            currentVertex++;
+        }
     }
 }

@@ -24,4 +24,20 @@ public class TerrainGenerator : MonoBehaviour
     /// The highest Y the terrain can have.
     /// </summary>
     [SerializeField] private float maxHeight;
+
+    /// <summary>
+    /// The size of the terrain on the x axis, as seen from top-down view.
+    /// </summary>
+    [SerializeField] private int xSize;
+
+    /// <summary>
+    /// The size of the terrain on the z axis, as seen for top-down view.
+    /// </summary>
+    [SerializeField] private int zSize;
+
+    /// <summary>
+    /// A seed that is used to generate different terrains.
+    /// </summary>
+    [Range(0.1f, 5.0f)]
+    [SerializeField] private float seed;
 }
