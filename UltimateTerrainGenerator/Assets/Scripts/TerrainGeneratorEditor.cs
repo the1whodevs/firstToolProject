@@ -49,6 +49,9 @@ public class TerrainGeneratorEditor : Editor
 
     private int[] triangles;
 
+    private float xSpace;
+    private float zSpace;
+
     private Mesh mesh;
 
     private MeshFilter meshFilter;
@@ -94,7 +97,6 @@ public class TerrainGeneratorEditor : Editor
 
         EditorGUILayout.BeginVertical();
 
-        //seed.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Seed"), seed.intValue);
         EditorGUILayout.PropertyField(seed, new GUIContent("Seed"));
 
         EditorGUILayout.PropertyField(GroundMaterial, new GUIContent("Ground Material"));
@@ -129,6 +131,16 @@ public class TerrainGeneratorEditor : Editor
 
     private void GenerateTerrain()
     {
+        xSpace = (float) xSize.intValue / Subdivisions.intValue;
+        Debug.Log("X-Size Int:" + xSize.intValue);
+        Debug.Log("Subdivs Int:" + Subdivisions.intValue);
+        Debug.Log("X-Space:" + xSpace);
+
+        zSpace = (float) zSize.intValue / Subdivisions.intValue;
+        Debug.Log("Z-Size Int:" + zSize.intValue);
+        Debug.Log("Subdivs Int:" + Subdivisions.intValue);
+        Debug.Log("Z-Space:" + zSpace);
+
         // First make the new vertex array
         CreateVertices();
 
@@ -148,48 +160,84 @@ public class TerrainGeneratorEditor : Editor
 
     private void CreateVertices()
     {
-        vertices = new Vector3[(xSize.intValue + 1) * (zSize.intValue + 1)];
+        vertices = new Vector3[(xSize.intValue * Subdivisions.intValue + 1) * (zSize.intValue * Subdivisions.intValue + 1)];
 
         int currentIndex = 0;
 
-        // Then iterate through all needed vertices and set their position
-        for (int z = 0; z <= zSize.intValue; z++)
+        float z = 0.0f;
+        float x = 0.0f;
+
+        while (!Mathf.Approximately(z, (float) zSize.intValue * Subdivisions.intValue - 1))
         {
-            for (int x = 0; x <= xSize.intValue; x++)
+
+            while (!Mathf.Approximately(x, (float)xSize.intValue * Subdivisions.intValue - 1))
             {
-                float height = Mathf.PerlinNoise(x * div, z * div) * 2.0f;
-                vertices[currentIndex] = new Vector3(x, height, z);
+                Debug.Log("Index: " + currentIndex);
+                float y = Mathf.Clamp(Mathf.PerlinNoise(x * div, z * div) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
+                vertices[currentIndex] = new Vector3(x, y, z);
 
                 currentIndex++;
+                x += xSpace;
+                Debug.Log("x: " + x);
             }
+
+            z += zSpace;
+            Debug.Log("z: " + z);
         }
+
+        #region Old Code
+        //for (int z = 0; z <= zSize.intValue * Subdivisions.intValue; z++)
+        //{
+        //    for (int x = 0; x <= xSize.intValue * Subdivisions.intValue; x++)
+        //    {
+        //        float y = Mathf.Clamp(Mathf.PerlinNoise(x * div, z * div) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
+        //        vertices[currentIndex] = new Vector3(x, y, z);
+
+        //        currentIndex++;
+        //    }
+        //}
+
+        //// Then iterate through all needed vertices and set their position
+        //for (int z = 0; z <= zSize.intValue; z++)
+        //{
+        //    for (int x = 0; x <= xSize.intValue; x++)
+        //    {
+        //        float height = Mathf.Clamp(Mathf.PerlinNoise(x * div, z * div) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
+        //        vertices[currentIndex] = new Vector3(x, height, z);
+
+        //        currentIndex++;
+        //    }
+        //} 
+        #endregion
     }
 
 
     private void CreateTriangles()
     {
-        triangles = new int[xSize.intValue * zSize.intValue * 6];
+        triangles = new int[(xSize.intValue * Subdivisions.intValue) * (zSize.intValue * Subdivisions.intValue) * 6];
 
         int currentVertex = 0;
         int numOfTriangles = 0;
 
-        for (int z = 0; z < zSize.intValue; z++)
-        {
-            for (int x = 0; x < xSize.intValue; x++)
-            {
+        Debug.Log("Length:" + triangles.Length);
 
-                triangles[numOfTriangles] = currentVertex + 0;
-                triangles[numOfTriangles + 1] = currentVertex + xSize.intValue + 1;
-                triangles[numOfTriangles + 2] = currentVertex + 1;
-                triangles[numOfTriangles + 3] = currentVertex + 1;
-                triangles[numOfTriangles + 4] = currentVertex + xSize.intValue + 1;
-                triangles[numOfTriangles + 5] = currentVertex + xSize.intValue + 2;
+        //for (int z = 0; z < zSize.intValue * Subdivisions.intValue; z++)
+        //{
+        //    for (int x = 0; x < xSize.intValue * Subdivisions.intValue; x++)
+        //    {
 
-                currentVertex++;
-                numOfTriangles += 6;
-            }
+        //        triangles[numOfTriangles] = currentVertex + 0;
+        //        triangles[numOfTriangles + 1] = currentVertex + xSize.intValue + 1;
+        //        triangles[numOfTriangles + 2] = currentVertex + 1;
+        //        triangles[numOfTriangles + 3] = currentVertex + 1;
+        //        triangles[numOfTriangles + 4] = currentVertex + xSize.intValue + 1;
+        //        triangles[numOfTriangles + 5] = currentVertex + xSize.intValue + 2;
 
-            currentVertex++;
-        }
+        //        currentVertex++;
+        //        numOfTriangles += 6;
+        //    }
+
+        //    currentVertex++;
+        //}
     }
 }
