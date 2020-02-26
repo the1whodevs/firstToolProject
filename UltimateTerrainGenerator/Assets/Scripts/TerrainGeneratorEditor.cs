@@ -161,19 +161,21 @@ public class TerrainGeneratorEditor : Editor
 
     private void CreateVertices()
     {
-        vertices = new Vector3[(xSize.intValue + Subdivisions.intValue) * (zSize.intValue + Subdivisions.intValue)];
-
+        vertices = new Vector3[(xSize.intValue * Subdivisions.intValue + 1) * (zSize.intValue * Subdivisions.intValue + 1)];
+        Debug.Log("Vertices Length: " + vertices.Length);
         int currentIndex = 0;
 
         for (int z = 0; z <= zSize.intValue * Subdivisions.intValue; z++)
         {
             for (int x = 0; x <= xSize.intValue * Subdivisions.intValue; x++)
             {
-                float y = Mathf.Clamp(Mathf.PerlinNoise(x / Subdivisions.intValue, z / Subdivisions.intValue) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
                 float xValue = x / (float)Subdivisions.intValue;
                 float zValue = z / (float)Subdivisions.intValue;
+
+                float y = Mathf.Clamp(Mathf.PerlinNoise(xValue, zValue) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
+
                 vertices[currentIndex] = new Vector3(xValue, y, zValue);
-                Debug.Log("Vertex #" + currentIndex + ": (X:" + vertices[currentIndex].x + ", Z:" + vertices[currentIndex].z + ")");
+                //Debug.Log("Vertex #" + currentIndex + ": (X:" + vertices[currentIndex].x + ", Z:" + vertices[currentIndex].z + ")");
                 currentIndex++;
             }
         }
@@ -232,28 +234,29 @@ public class TerrainGeneratorEditor : Editor
 
     private void CreateTriangles()
     {
-        triangles = new int[(xSize.intValue * Subdivisions.intValue) * (zSize.intValue * Subdivisions.intValue) * 6];
+        int neededTris = ((xSize.intValue * Subdivisions.intValue + 1) - 2) * zSize.intValue;
+        triangles = new int[neededTris * 3]; //(xSize.intValue * Subdivisions.intValue + 1) * (zSize.intValue * Subdivisions.intValue + 1) * 3
 
         int currentVertex = 0;
-        int numOfTriangles = 0;
+        int currentTriangleIndex = 0;
 
-        Debug.Log("Triangles Needed:" + triangles.Length / 3);
+        Debug.Log("Triangles Needed:" + neededTris + " -- Length: " + triangles.Length);
 
-        for (int z = 0; z < zSize.intValue * Subdivisions.intValue; z++)
+        for (int z = 0; z < zSize.intValue * Subdivisions.intValue; z++) //(int z = 0; z < zSize.intValue * Subdivisions.intValue; z++)
         {
-            for (int x = 0; x < xSize.intValue * Subdivisions.intValue; x++)
+            for (int x = 0; x < xSize.intValue * Subdivisions.intValue; x++) //(int x = 0; x < xSize.intValue * Subdivisions.intValue; x++)
             {
-                Debug.Log(currentVertex);
+                Debug.Log(currentVertex + " -- " + currentTriangleIndex);
 
-                triangles[numOfTriangles] = currentVertex;
-                triangles[numOfTriangles + 1] = currentVertex + 1;
-                triangles[numOfTriangles + 2] = currentVertex + xSize.intValue + Subdivisions.intValue;
-                triangles[numOfTriangles + 3] = currentVertex + 1;
-                triangles[numOfTriangles + 4] = currentVertex + xSize.intValue + zSize.intValue + Subdivisions.intValue;
-                triangles[numOfTriangles + 5] = currentVertex + zSize.intValue + Subdivisions.intValue;
+                triangles[currentTriangleIndex] = currentVertex;
+                triangles[currentTriangleIndex + 1] = currentVertex + 1;
+                triangles[currentTriangleIndex + 2] = currentVertex + xSize.intValue + Subdivisions.intValue;
+                //triangles[numOfTriangles + 3] = currentVertex + 1;
+                //triangles[numOfTriangles + 4] = currentVertex + xSize.intValue + zSize.intValue + Subdivisions.intValue;
+                //triangles[numOfTriangles + 5] = currentVertex + zSize.intValue + Subdivisions.intValue;
 
                 currentVertex++;
-                numOfTriangles += 6;
+                currentTriangleIndex += 3; //6
             }
 
             currentVertex++;
