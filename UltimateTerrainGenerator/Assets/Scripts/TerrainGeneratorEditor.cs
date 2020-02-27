@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
@@ -47,7 +48,9 @@ public class TerrainGeneratorEditor : Editor
 
     private Vector3[] vertices;
 
+    private List<int> triList = new List<int>();
     private int[] triangles;
+    private int trianglesMade;
 
     private float xSpace;
     private float zSpace;
@@ -131,15 +134,16 @@ public class TerrainGeneratorEditor : Editor
 
     private void GenerateTerrain()
     {
-        xSpace = (float) xSize.intValue / Subdivisions.intValue;
-        //Debug.Log("X-Size Int:" + xSize.intValue);
-        //Debug.Log("Subdivs Int:" + Subdivisions.intValue);
-        //Debug.Log("X-Space:" + xSpace);
+        xSpace = (float) xSize.intValue / (Subdivisions.intValue * xSize.intValue);
+        
+        Debug.Log("X-Size Int:" + xSize.intValue);
+        Debug.Log("Subdivs Int:" + Subdivisions.intValue);
+        Debug.Log("X-Space:" + xSpace);
 
-        zSpace = (float) zSize.intValue / Subdivisions.intValue;
-        //Debug.Log("Z-Size Int:" + zSize.intValue);
-        //Debug.Log("Subdivs Int:" + Subdivisions.intValue);
-        //Debug.Log("Z-Space:" + zSpace);
+        zSpace = (float) zSize.intValue / (Subdivisions.intValue * zSize.intValue);
+        Debug.Log("Z-Size Int:" + zSize.intValue);
+        Debug.Log("Subdivs Int:" + Subdivisions.intValue);
+        Debug.Log("Z-Space:" + zSpace);
 
         // First make the new vertex array
         CreateVertices();
@@ -147,8 +151,9 @@ public class TerrainGeneratorEditor : Editor
         // Then create the needed triangles
         CreateTriangles();
 
+        Debug.LogFormat("For {0} vertices, I made {1} triangles.", vertices.Length, trianglesMade);
+
         mesh = new Mesh();
-        mesh.Clear();
         mesh.vertices = vertices;
         mesh.triangles = triangles;
 
@@ -161,126 +166,203 @@ public class TerrainGeneratorEditor : Editor
 
     private void CreateVertices()
     {
-        vertices = new Vector3[(xSize.intValue * Subdivisions.intValue + 1) * (zSize.intValue * Subdivisions.intValue + 1)];
-        Debug.Log("Vertices Length: " + vertices.Length);
         int currentIndex = 0;
 
-        for (int z = 0; z <= zSize.intValue * Subdivisions.intValue; z++)
+        if (Subdivisions.intValue == 1)
         {
-            for (int x = 0; x <= xSize.intValue * Subdivisions.intValue; x++)
+            vertices = new Vector3[4];
+
+            for (int z = 0; z <= zSize.intValue; z += zSize.intValue)
             {
-                float xValue = x / (float)Subdivisions.intValue;
-                float zValue = z / (float)Subdivisions.intValue;
+                for (int x = 0; x <= xSize.intValue; x += xSize.intValue)
+                {
+                    float xValue = x;
+                    float zValue = z;
 
-                float y = Mathf.Clamp(Mathf.PerlinNoise(xValue, zValue) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
+                    float y = Mathf.Clamp(Mathf.PerlinNoise(xValue, zValue) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
 
-                vertices[currentIndex] = new Vector3(xValue, y, zValue);
-                //Debug.Log("Vertex #" + currentIndex + ": (X:" + vertices[currentIndex].x + ", Z:" + vertices[currentIndex].z + ")");
-                currentIndex++;
+                    vertices[currentIndex] = new Vector3(x, y, z);
+                    // Debug.Log(vertices[currentIndex]);
+
+                    // **** TEMP ****
+                    GameObject g = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    g.transform.position = vertices[currentIndex];
+                    g.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
+                    g.transform.SetParent(terrainGameObject.transform, true);
+                    g.name = currentIndex.ToString();
+                    // **** TEMP ****
+
+                    currentIndex++;
+                }
             }
         }
+        else
+        {
+            vertices = new Vector3[(xSize.intValue * Subdivisions.intValue + 1) * (zSize.intValue * Subdivisions.intValue + 1)];
 
+            for (int z = 0; z <= zSize.intValue * Subdivisions.intValue; z++)
+            {
+                for (int x = 0; x <= xSize.intValue * Subdivisions.intValue; x++)
+                {
+                    float xValue = x / (float)Subdivisions.intValue;
+                    float zValue = z / (float)Subdivisions.intValue;
 
-        #region Old Code
+                    float y = Mathf.Clamp(Mathf.PerlinNoise(xValue, zValue) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
 
-        // float z = 0.0f;
+                    vertices[currentIndex] = new Vector3(xValue, y, zValue);
+                    // Debug.Log(vertices[currentIndex]);
 
-        //while (z <= (zSize.intValue * Subdivisions.intValue - 1)) //!Mathf.Approximately(z, (float) zSize.intValue * Subdivisions.intValue - 1)
-        //{
-        //    float x = 0.0f;
+                    // **** TEMP ****
+                    GameObject g = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    g.transform.position = vertices[currentIndex];
+                    g.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
+                    g.transform.SetParent(terrainGameObject.transform, true);
+                    g.name = currentIndex.ToString();
+                    // **** TEMP ****
 
-        //    while (x <= (xSize.intValue * Subdivisions.intValue - 1)) //!Mathf.Approximately(x, (float)xSize.intValue * Subdivisions.intValue - 1)
-        //    {
-        //        Debug.LogFormat("Index: {0} // XZ: ({1}, {2})", currentIndex, x, z);
-        //        float y = Mathf.Clamp(Mathf.PerlinNoise(x * div, z * div) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
-        //        vertices[currentIndex] = new Vector3(x, y, z);
-
-        //        currentIndex++;
-        //        x += xSpace;
-
-        //    }
-
-        //    z += zSpace;
-
-        //} 
-        #endregion
-
-        #region Oldest Code
-        //for (int z = 0; z <= zSize.intValue * Subdivisions.intValue; z++)
-        //{
-        //    for (int x = 0; x <= xSize.intValue * Subdivisions.intValue; x++)
-        //    {
-        //        float y = Mathf.Clamp(Mathf.PerlinNoise(x * div, z * div) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
-        //        vertices[currentIndex] = new Vector3(x, y, z);
-
-        //        currentIndex++;
-        //    }
-        //}
-
-        //// Then iterate through all needed vertices and set their position
-        //for (int z = 0; z <= zSize.intValue; z++)
-        //{
-        //    for (int x = 0; x <= xSize.intValue; x++)
-        //    {
-        //        float height = Mathf.Clamp(Mathf.PerlinNoise(x * div, z * div) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
-        //        vertices[currentIndex] = new Vector3(x, height, z);
-
-        //        currentIndex++;
-        //    }
-        //} 
-        #endregion
+                    currentIndex++;
+                }
+            }
+        }
     }
 
 
     private void CreateTriangles()
     {
-        int neededTris = ((xSize.intValue * Subdivisions.intValue + 1) - 2) * zSize.intValue;
-        triangles = new int[neededTris * 3]; //(xSize.intValue * Subdivisions.intValue + 1) * (zSize.intValue * Subdivisions.intValue + 1) * 3
+        trianglesMade = 0;
+        triList.Clear();
 
-        int currentVertex = 0;
-        int currentTriangleIndex = 0;
-
-        Debug.Log("Triangles Needed:" + neededTris + " -- Length: " + triangles.Length);
-
-        for (int z = 0; z < zSize.intValue * Subdivisions.intValue; z++) //(int z = 0; z < zSize.intValue * Subdivisions.intValue; z++)
+        for (int i = 0; i < vertices.Length; i++)
         {
-            for (int x = 0; x < xSize.intValue * Subdivisions.intValue; x++) //(int x = 0; x < xSize.intValue * Subdivisions.intValue; x++)
-            {
-                Debug.Log(currentVertex + " -- " + currentTriangleIndex);
+            bool BL = TryMakingBLTriangle(i);
+            bool TR = TryMakingTRTriangle(i);
 
-                triangles[currentTriangleIndex] = currentVertex;
-                triangles[currentTriangleIndex + 1] = currentVertex + 1;
-                triangles[currentTriangleIndex + 2] = currentVertex + xSize.intValue + Subdivisions.intValue;
-                //triangles[numOfTriangles + 3] = currentVertex + 1;
-                //triangles[numOfTriangles + 4] = currentVertex + xSize.intValue + zSize.intValue + Subdivisions.intValue;
-                //triangles[numOfTriangles + 5] = currentVertex + zSize.intValue + Subdivisions.intValue;
-
-                currentVertex++;
-                currentTriangleIndex += 3; //6
-            }
-
-            currentVertex++;
+            if (!BL) { Debug.LogError("Didn't make BL! Name: " + i); }
+            if (!TR) { Debug.LogError("Didn't make TR! Name: " + i); }
         }
 
-        //for (int z = 0; z <= zSize.intValue * Subdivisions.intValue - 1; z++)
-        //{
-        //    for (int x = 0; x <= xSize.intValue * Subdivisions.intValue - 1; x++)
-        //    {
-        //        Debug.LogFormat("Current X, Z: ({0}, {1})", x, z);
+        // Convert the triangle list to array.
+        triangles = new int[triList.Count];
+        triangles = triList.ToArray();
+    }
 
-        //        // ****** THIS IS WORKING *********** 
-        //        //triangles[numOfTriangles] = currentVertex;
-        //        //triangles[numOfTriangles + 1] = currentVertex + 1;
-        //        //triangles[numOfTriangles + 2] = currentVertex + xSize.intValue + Subdivisions.intValue;
-        //        //triangles[numOfTriangles + 3] = currentVertex + 1;
-        //        //triangles[numOfTriangles + 4] = currentVertex + xSize.intValue + zSize.intValue + Subdivisions.intValue;
-        //        //triangles[numOfTriangles + 5] = currentVertex + zSize.intValue + Subdivisions.intValue;
+    /// <summary>
+    /// Try making a Bottom-Left triangle with the vertice at the 'currentIndex'
+    /// being the start, positioned at the Bottom-Left of the triangle to be made.
+    /// </summary>
+    /// <param name="currentIndex"></param>
+    private bool TryMakingBLTriangle(int currentIndex)
+    {
+        // If we're at the last index, index + 1 throws IndexOutOfRange!
+        if (currentIndex >= vertices.Length - 1)
+        {
+            Debug.Log("BL: index");
+            return false;
+        }
 
-        //        //currentVertex++;
-        //        //numOfTriangles += 6;
-        //    }
+        Vector3 currentVertex = vertices[currentIndex];
+        Vector3 nextVertex = vertices[currentIndex + 1];
 
-        //    currentVertex++;
-        //}
+        int vertexAboveMeIndex = FindVertexAt(currentVertex.x, currentVertex.z + zSpace);
+
+        // For a BL triangle to be made:
+        // --> A vertex exists at the position (currentVertex.x, currentVertex.z + zSpace)
+        if (vertexAboveMeIndex == -1)
+        {
+            Debug.Log("BL: -1");
+            return false;
+        }
+
+        // --> The next vertex must have pos.z == to the current vertex
+        // --> The next vertex must have pos.x == currentVertex.x + xSpace
+        if (currentVertex.z != nextVertex.z)
+        {
+            Debug.Log("BL: z");
+            return false;
+        }
+
+        if (nextVertex.x != currentVertex.x + xSpace)
+        {
+            Debug.Log("BL: x");
+            return false;
+        }
+
+        triList.Add(currentIndex);
+        triList.Add(vertexAboveMeIndex);
+        triList.Add(currentIndex + 1);
+        
+        trianglesMade++;
+        return true;
+    }
+
+    /// <summary>
+    /// Try making a Top-Right triangle with the vertice at the 'currentIndex'
+    /// being the start, positioned at the Top-Right of the triangle to be made.
+    /// </summary>
+    /// <param name="currentIndex"></param>
+    private bool TryMakingTRTriangle(int currentIndex)
+    {
+        // If we're at 0, currentIndex - 1 throws IndexOutOfRange!
+        if (currentIndex == 0)
+        {
+            Debug.Log("TR: Index");
+            return false;
+        }
+
+        Vector3 currentVertex = vertices[currentIndex];
+        Vector3 previousVertex = vertices[currentIndex - 1];
+
+        int vertexBelowMeIndex = FindVertexAt(currentVertex.x, currentVertex.z - zSpace);
+
+        // For a TR triangle to be made:
+        // --> A vertex exists at the position (currentVertex.x, currentVertex.z - zSpace)
+        if (vertexBelowMeIndex == -1)
+        {
+            Debug.Log("TR: -1");
+            return false;
+        }
+
+        // --> The previous vertex must have pos.z == to the current vertex
+        // --> The previous vertex must have pos.x == currentVertex.x - xSpace
+        if (currentVertex.z != previousVertex.z)
+        {
+            Debug.Log("TR: z");
+            return false;
+        }
+
+        if (previousVertex.x != currentVertex.x - xSpace)
+        {
+            Debug.Log("TR: x");
+            return false;
+        }
+
+        triList.Add(currentIndex);
+        triList.Add(vertexBelowMeIndex);
+        triList.Add(currentIndex - 1);
+        
+        trianglesMade++;
+        return true;
+    }
+
+    /// <summary>
+    /// Returns the index of the first vertex found in the 'vertices' array,
+    /// with the given x and z position (y is ignored). If no vertex is found,
+    /// returns -1 instead.
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="z"></param>
+    /// <returns></returns>
+    private int FindVertexAt(float x, float z)
+    {
+
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            if (vertices[i].x == x && vertices[i].z == z)
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 }
