@@ -16,11 +16,6 @@ public class TerrainGenerator : MonoBehaviour
     [SerializeField] private int Subdivisions;
 
     /// <summary>
-    /// The lowest Y the terrain can have.
-    /// </summary>
-    [SerializeField] private float minHeight;
-
-    /// <summary>
     /// The highest Y the terrain can have.
     /// </summary>
     [SerializeField] private float maxHeight;
@@ -40,4 +35,5 @@ public class TerrainGenerator : MonoBehaviour
     /// </summary>
     [Range(0.1f, 5.0f)]
     [SerializeField] private float seed;
+
 }

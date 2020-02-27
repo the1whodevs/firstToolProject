@@ -31,11 +31,6 @@ public class TerrainGeneratorEditor : Editor
     private SerializedProperty Subdivisions;
 
     /// <summary>
-    /// The lowest Y the terrain can have.
-    /// </summary>
-    private SerializedProperty minHeight;
-
-    /// <summary>
     /// The highest Y the terrain can have.
     /// </summary>
     private SerializedProperty maxHeight;
@@ -72,7 +67,7 @@ public class TerrainGeneratorEditor : Editor
 
         Subdivisions = serializedObject.FindProperty("Subdivisions");
 
-        minHeight = serializedObject.FindProperty("minHeight");
+        // minHeight = serializedObject.FindProperty("minHeight");
         maxHeight = serializedObject.FindProperty("maxHeight");
 
         if (terrainGameObject == null)
@@ -106,17 +101,15 @@ public class TerrainGeneratorEditor : Editor
 
         EditorGUILayout.Space();
 
-        xSize.intValue = EditorGUILayout.DelayedIntField(new GUIContent("X-Axis"), xSize.intValue);
-        zSize.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Z-Axis"), zSize.intValue);
+        xSize.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Terrain Width"), xSize.intValue);
+        zSize.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Terrain Depth"), zSize.intValue);
+        maxHeight.floatValue = EditorGUILayout.DelayedFloatField(new GUIContent("Maximum Terrain Height"), maxHeight.floatValue);
 
         EditorGUILayout.Space();
 
-        Subdivisions.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Subdivisions"), Subdivisions.intValue);
+        Subdivisions.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Edges per Axis Unit"), Subdivisions.intValue);
 
         EditorGUILayout.Space();
-
-        minHeight.floatValue = EditorGUILayout.DelayedFloatField(new GUIContent("Minimum Height"), minHeight.floatValue);
-        maxHeight.floatValue = EditorGUILayout.DelayedFloatField(new GUIContent("Maximum Height"), maxHeight.floatValue);
 
         EditorGUILayout.EndVertical();
 
@@ -161,16 +154,27 @@ public class TerrainGeneratorEditor : Editor
     {
         int currentIndex = 0;
 
+        float xValue, zValue, y;
+
         vertices = new Vector3[(xSize.intValue * Subdivisions.intValue + 1) * (zSize.intValue * Subdivisions.intValue + 1)];
 
         for (int z = 0; z <= zSize.intValue * Subdivisions.intValue; z++)
         {
             for (int x = 0; x <= xSize.intValue * Subdivisions.intValue; x++)
             {
-                float xValue = x / (float)Subdivisions.intValue;
-                float zValue = z / (float)Subdivisions.intValue;
+                xValue = x / (float)Subdivisions.intValue;
+                zValue = z / (float)Subdivisions.intValue;
 
-                float y = Mathf.Clamp(Mathf.PerlinNoise(xValue, zValue) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
+                if ((x <= 0.025f * (xSize.intValue * Subdivisions.intValue + 1) || x >= 0.975f * (xSize.intValue * Subdivisions.intValue + 1)) || 
+                    (z <= 0.025f * (zSize.intValue * Subdivisions.intValue + 1) || z >= 0.975f * (zSize.intValue * Subdivisions.intValue + 1)))
+                {
+                    y = Mathf.PerlinNoise(xValue + div + vertices.Length, zValue + div + vertices.Length);
+                }
+                else
+                {
+                    y = Mathf.Clamp(Mathf.PerlinNoise(xValue + div + vertices.Length, zValue + div + vertices.Length), 0.0f, maxHeight.floatValue); // Mathf.PerlinNoise(xValue + div + vertices.Length, zValue + div + vertices.Length) * 2.0f + (0.1f * maxHeight.floatValue)
+                }
+
 
                 vertices[currentIndex] = new Vector3(xValue, y, zValue);
 
