@@ -135,15 +135,8 @@ public class TerrainGeneratorEditor : Editor
     private void GenerateTerrain()
     {
         xSpace = (float) xSize.intValue / (Subdivisions.intValue * xSize.intValue);
-        
-        Debug.Log("X-Size Int:" + xSize.intValue);
-        Debug.Log("Subdivs Int:" + Subdivisions.intValue);
-        Debug.Log("X-Space:" + xSpace);
-
         zSpace = (float) zSize.intValue / (Subdivisions.intValue * zSize.intValue);
-        Debug.Log("Z-Size Int:" + zSize.intValue);
-        Debug.Log("Subdivs Int:" + Subdivisions.intValue);
-        Debug.Log("Z-Space:" + zSpace);
+
 
         // First make the new vertex array
         CreateVertices();
@@ -168,62 +161,31 @@ public class TerrainGeneratorEditor : Editor
     {
         int currentIndex = 0;
 
-        if (Subdivisions.intValue == 1)
+        vertices = new Vector3[(xSize.intValue * Subdivisions.intValue + 1) * (zSize.intValue * Subdivisions.intValue + 1)];
+
+        for (int z = 0; z <= zSize.intValue * Subdivisions.intValue; z++)
         {
-            vertices = new Vector3[4];
-
-            for (int z = 0; z <= zSize.intValue; z += zSize.intValue)
+            for (int x = 0; x <= xSize.intValue * Subdivisions.intValue; x++)
             {
-                for (int x = 0; x <= xSize.intValue; x += xSize.intValue)
-                {
-                    float xValue = x;
-                    float zValue = z;
+                float xValue = x / (float)Subdivisions.intValue;
+                float zValue = z / (float)Subdivisions.intValue;
 
-                    float y = Mathf.Clamp(Mathf.PerlinNoise(xValue, zValue) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
+                float y = Mathf.Clamp(Mathf.PerlinNoise(xValue, zValue) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
 
-                    vertices[currentIndex] = new Vector3(x, y, z);
-                    // Debug.Log(vertices[currentIndex]);
+                vertices[currentIndex] = new Vector3(xValue, y, zValue);
 
-                    // **** TEMP ****
-                    GameObject g = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    g.transform.position = vertices[currentIndex];
-                    g.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
-                    g.transform.SetParent(terrainGameObject.transform, true);
-                    g.name = currentIndex.ToString();
-                    // **** TEMP ****
+                //// **** TEMP ****
+                //GameObject g = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                //g.transform.position = vertices[currentIndex];
+                //g.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
+                //g.transform.SetParent(terrainGameObject.transform, true);
+                //g.name = currentIndex.ToString();
+                //// **** TEMP ****
 
-                    currentIndex++;
-                }
+                currentIndex++;
             }
         }
-        else
-        {
-            vertices = new Vector3[(xSize.intValue * Subdivisions.intValue + 1) * (zSize.intValue * Subdivisions.intValue + 1)];
 
-            for (int z = 0; z <= zSize.intValue * Subdivisions.intValue; z++)
-            {
-                for (int x = 0; x <= xSize.intValue * Subdivisions.intValue; x++)
-                {
-                    float xValue = x / (float)Subdivisions.intValue;
-                    float zValue = z / (float)Subdivisions.intValue;
-
-                    float y = Mathf.Clamp(Mathf.PerlinNoise(xValue, zValue) * 2.0f, minHeight.floatValue, maxHeight.floatValue);
-
-                    vertices[currentIndex] = new Vector3(xValue, y, zValue);
-                    // Debug.Log(vertices[currentIndex]);
-
-                    // **** TEMP ****
-                    GameObject g = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    g.transform.position = vertices[currentIndex];
-                    g.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
-                    g.transform.SetParent(terrainGameObject.transform, true);
-                    g.name = currentIndex.ToString();
-                    // **** TEMP ****
-
-                    currentIndex++;
-                }
-            }
-        }
     }
 
 
@@ -237,8 +199,8 @@ public class TerrainGeneratorEditor : Editor
             bool BL = TryMakingBLTriangle(i);
             bool TR = TryMakingTRTriangle(i);
 
-            if (!BL) { Debug.LogError("Didn't make BL! Name: " + i); }
-            if (!TR) { Debug.LogError("Didn't make TR! Name: " + i); }
+            // if (!BL) { Debug.LogError("Didn't make BL! Name: " + i); }
+            // if (!TR) { Debug.LogError("Didn't make TR! Name: " + i); }
         }
 
         // Convert the triangle list to array.
@@ -256,7 +218,6 @@ public class TerrainGeneratorEditor : Editor
         // If we're at the last index, index + 1 throws IndexOutOfRange!
         if (currentIndex >= vertices.Length - 1)
         {
-            Debug.Log("BL: index");
             return false;
         }
 
@@ -269,7 +230,6 @@ public class TerrainGeneratorEditor : Editor
         // --> A vertex exists at the position (currentVertex.x, currentVertex.z + zSpace)
         if (vertexAboveMeIndex == -1)
         {
-            Debug.Log("BL: -1");
             return false;
         }
 
@@ -277,13 +237,12 @@ public class TerrainGeneratorEditor : Editor
         // --> The next vertex must have pos.x == currentVertex.x + xSpace
         if (currentVertex.z != nextVertex.z)
         {
-            Debug.Log("BL: z");
             return false;
         }
 
-        if (nextVertex.x != currentVertex.x + xSpace)
+        float neededNextX = currentVertex.x + xSpace;
+        if (!Mathf.Approximately(nextVertex.x, neededNextX))
         {
-            Debug.Log("BL: x");
             return false;
         }
 
@@ -305,7 +264,6 @@ public class TerrainGeneratorEditor : Editor
         // If we're at 0, currentIndex - 1 throws IndexOutOfRange!
         if (currentIndex == 0)
         {
-            Debug.Log("TR: Index");
             return false;
         }
 
@@ -318,7 +276,6 @@ public class TerrainGeneratorEditor : Editor
         // --> A vertex exists at the position (currentVertex.x, currentVertex.z - zSpace)
         if (vertexBelowMeIndex == -1)
         {
-            Debug.Log("TR: -1");
             return false;
         }
 
@@ -326,13 +283,12 @@ public class TerrainGeneratorEditor : Editor
         // --> The previous vertex must have pos.x == currentVertex.x - xSpace
         if (currentVertex.z != previousVertex.z)
         {
-            Debug.Log("TR: z");
             return false;
         }
 
-        if (previousVertex.x != currentVertex.x - xSpace)
+        float neededPreviousX = currentVertex.x - xSpace;
+        if (!Mathf.Approximately(previousVertex.x , neededPreviousX))
         {
-            Debug.Log("TR: x");
             return false;
         }
 
@@ -357,7 +313,7 @@ public class TerrainGeneratorEditor : Editor
 
         for (int i = 0; i < vertices.Length; i++)
         {
-            if (vertices[i].x == x && vertices[i].z == z)
+            if (Mathf.Approximately(vertices[i].x, x) && Mathf.Approximately(vertices[i].z, z))
             {
                 return i;
             }
