@@ -163,9 +163,6 @@ public class TerrainGeneratorEditor : Editor
         meshCollider.sharedMesh = mesh;
 
         mesh.RecalculateNormals();
-
-        // AssetDatabase.CreateAsset((mesh, Application.dataPath + "/Ultimate Terrain Generator/Generated Meshes/");
-        // AssetDatabase.SaveAssets();
     }
 
     private void CreateVertices()
