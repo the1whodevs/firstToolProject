@@ -41,7 +41,7 @@ public class TerrainGenerator : MonoBehaviour
     /// If true, instead of making a mesh vertex by vertex, it positions and scales cubes on the 
     /// calculated vertex positions.
     /// </summary>
-    [SerializeField] private bool doMinecraft;
+    [SerializeField] private bool doMinecraft = false;
 
     [SerializeField] private GameObject terrainGameObject;
 
@@ -56,10 +56,6 @@ public class TerrainGenerator : MonoBehaviour
     private float zSpace;
 
     private Mesh mesh;
-
-    //[SerializeField] private MeshFilter meshFilter;
-    //[SerializeField] private MeshRenderer meshRenderer;
-    //[SerializeField] private MeshCollider meshCollider;
 
     public void GenerateTerrain(ref MeshFilter meshFilter, ref MeshRenderer meshRenderer, ref MeshCollider meshCollider, float div)
     {

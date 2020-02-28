@@ -39,6 +39,8 @@ public class TerrainGeneratorEditor : Editor
 
     private SerializedProperty terrainGameObject;
 
+    private SerializedProperty minecraftMode;
+
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
     private MeshCollider meshCollider;
@@ -58,8 +60,9 @@ public class TerrainGeneratorEditor : Editor
 
         Subdivisions = serializedObject.FindProperty("Subdivisions");
 
-        // minHeight = serializedObject.FindProperty("minHeight");
         maxHeight = serializedObject.FindProperty("maxHeight");
+
+        minecraftMode = serializedObject.FindProperty("doMinecraft");
 
         if (terrainGameObject.objectReferenceValue == null)
         {
@@ -89,34 +92,43 @@ public class TerrainGeneratorEditor : Editor
         EditorGUILayout.PropertyField(seed, new GUIContent("Seed"));
 
         EditorGUILayout.Space();
-        EditorGUILayout.Separator();
-        EditorGUILayout.Space();
 
+        EditorGUILayout.PropertyField(minecraftMode, new GUIContent("Minecraft Mode"));
+        Subdivisions.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Edges per Axis Unit"), Subdivisions.intValue);
         EditorGUILayout.PropertyField(GroundMaterial, new GUIContent("Ground Material"));
 
+        EditorGUILayout.Space();
+        EditorGUILayout.Separator();
         EditorGUILayout.Space();
 
         xSize.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Terrain Width"), xSize.intValue);
         zSize.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Terrain Depth"), zSize.intValue);
         maxHeight.floatValue = EditorGUILayout.DelayedFloatField(new GUIContent("Maximum Terrain Height"), maxHeight.floatValue);
 
-        EditorGUILayout.Space();
-
-        Subdivisions.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Edges per Axis Unit"), Subdivisions.intValue);
-
-        EditorGUILayout.Space();
-
-        EditorGUILayout.EndVertical();
-
-        serializedObject.ApplyModifiedProperties();
-
-        div = 1 / seed.floatValue;
-
-        if (GUILayout.Button("Generate Terrain"))
+        if (!minecraftMode.boolValue)
         {
-            ((TerrainGenerator)target).GenerateTerrain(ref meshFilter, ref meshRenderer, ref meshCollider, div);
+            EditorGUILayout.Space();
+
+            EditorGUILayout.EndVertical();
+
+            div = 1 / seed.floatValue;
+
+            if (GUILayout.Button("Generate Terrain"))
+            {
+                ((TerrainGenerator)target).GenerateTerrain(ref meshFilter, ref meshRenderer, ref meshCollider, div);
+            } 
+        }
+        else
+        {
+            EditorGUILayout.LabelField(new GUIContent("Coming soon!"));
+
+            // Box Height
+            // GenerateMinecraftTerrain button
+
+            EditorGUILayout.EndVertical();
         }
 
+        serializedObject.ApplyModifiedProperties();
         EditorGUILayout.Separator();
 
         if (meshFilter.sharedMesh != null)

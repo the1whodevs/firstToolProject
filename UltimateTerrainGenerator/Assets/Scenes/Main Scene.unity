@@ -440,7 +440,7 @@ MonoBehaviour:
   maxHeight: 50
   xSize: 10
   zSize: 10
-  seed: 3
+  seed: 2.08
   doMinecraft: 0
   terrainGameObject: {fileID: 0}
 --- !u!4 &1406524796
