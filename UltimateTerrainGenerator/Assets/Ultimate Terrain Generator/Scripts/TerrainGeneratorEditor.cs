@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 [CustomEditor(typeof(TerrainGenerator))]
@@ -33,7 +29,7 @@ public class TerrainGeneratorEditor : Editor
     /// <summary>
     /// The highest Y the terrain can have.
     /// </summary>
-    private SerializedProperty maxHeight;
+    private SerializedProperty heightMultiplier;
 
     private SerializedProperty seed;
 
@@ -60,7 +56,7 @@ public class TerrainGeneratorEditor : Editor
 
         Subdivisions = serializedObject.FindProperty("Subdivisions");
 
-        maxHeight = serializedObject.FindProperty("maxHeight");
+        heightMultiplier = serializedObject.FindProperty("heightMultiplier");
 
         minecraftMode = serializedObject.FindProperty("doMinecraft");
 
@@ -75,11 +71,13 @@ public class TerrainGeneratorEditor : Editor
                 typeof(MeshRenderer),
                 typeof(MeshCollider));
             }
-
-            meshFilter = ((GameObject)terrainGameObject.objectReferenceValue).GetComponent<MeshFilter>();
-            meshRenderer = ((GameObject)terrainGameObject.objectReferenceValue).GetComponent<MeshRenderer>();
-            meshCollider = ((GameObject)terrainGameObject.objectReferenceValue).GetComponent<MeshCollider>();
         }
+
+        meshFilter = ((GameObject)terrainGameObject.objectReferenceValue).GetComponent<MeshFilter>();
+        meshRenderer = ((GameObject)terrainGameObject.objectReferenceValue).GetComponent<MeshRenderer>();
+        meshCollider = ((GameObject)terrainGameObject.objectReferenceValue).GetComponent<MeshCollider>();
+
+        serializedObject.ApplyModifiedProperties();
     }
 
     public override void OnInspectorGUI()
@@ -103,7 +101,7 @@ public class TerrainGeneratorEditor : Editor
 
         xSize.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Terrain Width"), xSize.intValue);
         zSize.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Terrain Depth"), zSize.intValue);
-        maxHeight.floatValue = EditorGUILayout.DelayedFloatField(new GUIContent("Maximum Terrain Height"), maxHeight.floatValue);
+        heightMultiplier.floatValue = EditorGUILayout.DelayedFloatField(new GUIContent("Height Multiplier"), heightMultiplier.floatValue);
 
         if (!minecraftMode.boolValue)
         {
