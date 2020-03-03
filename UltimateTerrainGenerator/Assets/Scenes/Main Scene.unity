@@ -599,10 +599,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   GroundMaterial: {fileID: 2100000, guid: f92c13216110b314b840ac182a13beb2, type: 2}
-  Subdivisions: 20
+  Subdivisions: 50
   heightMultiplier: 1
-  xSize: 1
-  zSize: 1
+  xSize: 5
+  zSize: 5
   seed: 2.99
   doMinecraft: 0
   terrainGameObject: {fileID: 2146085572}

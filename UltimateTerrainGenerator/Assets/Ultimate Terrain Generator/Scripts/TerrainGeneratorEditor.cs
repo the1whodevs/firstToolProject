@@ -147,22 +147,20 @@ public class TerrainGeneratorEditor : Editor
         public static void SaveMeshAs(ref MeshFilter mf)
         {
             Mesh m = mf.sharedMesh;
-            SaveMesh(m, m.name, true, true);
+            SaveMesh(m, m.name, true);
         }
 
-        private static void SaveMesh(Mesh mesh, string name, bool makeNewInstance, bool optimizeMesh)
+        private static void SaveMesh(Mesh mesh, string name, bool optimizeMesh)
         {
-            string path = EditorUtility.SaveFilePanel("Save Separate Mesh Asset", "Assets/Ultimate Terrain Generator/Generated Meshes/", name, "mesh");
+            string path = EditorUtility.SaveFilePanel("Save Mesh As...", "Assets/Ultimate Terrain Generator/Generated Meshes/", name, "mesh");
             if (string.IsNullOrEmpty(path)) return;
 
             path = FileUtil.GetProjectRelativePath(path);
 
-            Mesh meshToSave = (makeNewInstance) ? Instantiate(mesh) as Mesh : mesh;
+            //if (optimizeMesh)
+            //    MeshUtility.Optimize(mesh);
 
-            if (optimizeMesh)
-                MeshUtility.Optimize(meshToSave);
-
-            AssetDatabase.CreateAsset(meshToSave, path);
+            AssetDatabase.CreateAsset(mesh, path);
             AssetDatabase.SaveAssets();
         }
 
