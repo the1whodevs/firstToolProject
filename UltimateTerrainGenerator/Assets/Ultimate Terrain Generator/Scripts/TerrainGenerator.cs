@@ -56,26 +56,19 @@ public class TerrainGenerator : MonoBehaviour
 
     public void GenerateTerrain(ref MeshFilter meshFilter, ref MeshRenderer meshRenderer, ref MeshCollider meshCollider, float div)
     {
-        int c = terrainGameObject.transform.childCount;
-        while (c > 0)
-        {
-            DestroyImmediate(terrainGameObject.transform.GetChild(c - 1).gameObject);
-            c--;
-        }
-
         // First make the new vertex array
         CreateVertices(div);
 
         // Then create the needed triangles
         CreateTriangles();
 
-        Debug.LogFormat("For {0} vertices, I made {1} triangles.", vertices.Length, trianglesMade);
-
         mesh = new Mesh();
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 
-        mesh.vertices = vertices;
-        mesh.triangles = triangles;
+        mesh.SetVertices(vertices);
+        // mesh.vertices = vertices;
+        mesh.SetTriangles(triangles, 0);
+        // mesh.triangles = triangles;
 
         meshFilter.sharedMesh = mesh;
         meshRenderer.sharedMaterial = GroundMaterial;
