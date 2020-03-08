@@ -37,6 +37,10 @@ public class TerrainGeneratorEditor : Editor
 
     private SerializedProperty minecraftMode;
 
+    private SerializedProperty xGridSize, zGridSize;
+
+    private SerializedProperty gridMultipliers;
+
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
     private MeshCollider meshCollider;
@@ -59,6 +63,11 @@ public class TerrainGeneratorEditor : Editor
         heightMultiplier = serializedObject.FindProperty("heightMultiplier");
 
         minecraftMode = serializedObject.FindProperty("doMinecraft");
+
+        xGridSize = serializedObject.FindProperty("xGridSize");
+        zGridSize = serializedObject.FindProperty("zGridSize");
+
+        gridMultipliers = serializedObject.FindProperty("gridMultipliers");
 
         if (terrainGameObject.objectReferenceValue == null)
         {
@@ -93,6 +102,7 @@ public class TerrainGeneratorEditor : Editor
 
         EditorGUILayout.PropertyField(minecraftMode, new GUIContent("Minecraft Mode"));
         Subdivisions.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Edges per Axis Unit"), Subdivisions.intValue);
+
         EditorGUILayout.PropertyField(GroundMaterial, new GUIContent("Ground Material"));
 
         EditorGUILayout.Space();
@@ -102,6 +112,20 @@ public class TerrainGeneratorEditor : Editor
         xSize.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Terrain Width"), xSize.intValue);
         zSize.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Terrain Depth"), zSize.intValue);
         heightMultiplier.floatValue = EditorGUILayout.DelayedFloatField(new GUIContent("Height Multiplier"), heightMultiplier.floatValue);
+
+        EditorGUILayout.Space();
+        EditorGUILayout.Separator();
+        EditorGUILayout.Space();
+
+        xGridSize.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Grid Size X"), xGridSize.intValue);
+        zGridSize.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Grid Size Z"), zGridSize.intValue);
+
+        if (GUILayout.Button("Set Grid Size"))
+        {
+            ((TerrainGenerator)target).InitializeGridMultipliersLength();
+        }
+
+        EditorGUILayout.PropertyField(gridMultipliers, new GUIContent("Grid Multipliers", "Each element is a slot in the grid. Element #0 is (0, 0). Increases by X first and then by Z."));
 
         if (!minecraftMode.boolValue)
         {
@@ -139,6 +163,12 @@ public class TerrainGeneratorEditor : Editor
 
 
         EditorGUI.indentLevel--;
+
+        if (gridMultipliers.arraySize != xGridSize.intValue * zGridSize.intValue)
+        {
+            ((TerrainGenerator)target).InitializeGridMultipliersLength();
+            Debug.LogError("Please don't change the 'Grid Multipliers' size manually. Only change it by adjusting 'xGridSize' and 'zGridSize' and then pressing the button 'Set Grid Size'.");
+        }
     }
 
     public static class MeshSaverEditor

@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 [ExecuteInEditMode]
 public class TerrainGenerator : MonoBehaviour
@@ -52,6 +51,10 @@ public class TerrainGenerator : MonoBehaviour
 
     private int xEdges, zEdges, xVertices, zVertices;
 
+    [SerializeField] private int xGridSize, zGridSize;
+
+    [SerializeField] private float[] gridMultipliers;
+
     private Mesh mesh;
 
     public void GenerateTerrain(ref MeshFilter meshFilter, ref MeshRenderer meshRenderer, ref MeshCollider meshCollider, float div)
@@ -77,6 +80,11 @@ public class TerrainGenerator : MonoBehaviour
         mesh.RecalculateNormals();
     }
 
+    public void InitializeGridMultipliersLength()
+    {
+        gridMultipliers = new float[xGridSize * zGridSize];
+    }
+
     private void CreateVertices(float div)
     {
         int currentIndex = 0;
@@ -86,10 +94,14 @@ public class TerrainGenerator : MonoBehaviour
         xEdges = xSize * Subdivisions;
         zEdges = zSize * Subdivisions;
 
+        Debug.LogFormat("X: {0} - Z:{1}", xEdges, zEdges);
+
         xVertices = xEdges + 1;
         zVertices = zEdges + 1;
 
         vertices = new Vector3[xVertices * zVertices];
+
+        float PerlinMultiplier;
 
         for (int z = 0; z <= zEdges; z++)
         {
@@ -98,7 +110,10 @@ public class TerrainGenerator : MonoBehaviour
                 xValue = x / (float)Subdivisions;
                 zValue = z / (float)Subdivisions;
 
-                y = heightMultiplier * Mathf.PerlinNoise(xValue + div, zValue + div);
+                int gridIndex = GetGridIndex(xValue, zValue);
+                PerlinMultiplier = gridMultipliers[gridIndex];
+                Debug.Log(PerlinMultiplier);
+                y = PerlinMultiplier * heightMultiplier * Mathf.PerlinNoise(xValue + div, zValue + div);
 
                 vertices[currentIndex] = new Vector3(xValue, y, zValue);
                 currentIndex++;
@@ -106,7 +121,6 @@ public class TerrainGenerator : MonoBehaviour
         }
 
     }
-
 
     private void CreateTriangles()
     {
@@ -139,6 +153,64 @@ public class TerrainGenerator : MonoBehaviour
             }
         }
 
+    }
+
+    private int GetGridIndex(float x, float z)
+    {
+        int indexToReturn, column = -1, row = -1;
+
+        // First find the column
+        for (int ix = xGridSize; ix >= 1 ; ix--)
+        {
+            if (x < xEdges / ix)
+            {
+                //Debug.LogFormat("X: {0} - Div: {1}", x, (xEdges / ix));
+                Debug.Log("x1");
+                column = xGridSize - ix;
+                break;
+            }
+            else if (Mathf.Approximately(x, xEdges / ix))
+            {
+                //Debug.LogFormat("X: {0} - Div: {1}", x, (xEdges / ix));
+                Debug.Log("x2");
+                column = xGridSize - ix + 1;
+                break;
+            }
+        }
+
+        // Then find the row
+        for (int iz = zGridSize; iz >= 1; iz--)
+        {
+            if (z < zEdges / iz)
+            {
+                //Debug.LogFormat("Z: {0} - Div: {1}", z, (zEdges / iz));
+                Debug.Log("z1");
+                row = zGridSize - iz;
+                break;
+            }
+            else if (Mathf.Approximately(z, zEdges / iz))
+            {
+                //Debug.LogFormat("Z: {0} - Div: {1}", z, (zEdges / iz));
+                Debug.Log("z2");
+                row = zGridSize - iz + 1;
+                break;
+            }
+        }
+
+        if (column >= xGridSize)
+        {
+            column = xGridSize - 1;
+        }
+
+        if (row >= zGridSize)
+        {
+            row = zGridSize - 1;
+        }
+
+        indexToReturn = column + (row * xGridSize);
+
+        Debug.LogFormat("XZ: {0}, {1} - Column: {2} - Row: {3} - Index: {4}", x, z, column, row, indexToReturn);
+        return indexToReturn;
     }
 
 }
