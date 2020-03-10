@@ -100,7 +100,8 @@ public class TerrainGeneratorEditor : Editor
 
         EditorGUILayout.Space();
 
-        EditorGUILayout.PropertyField(minecraftMode, new GUIContent("Minecraft Mode"));
+        // To be implemented in a future version.
+        // EditorGUILayout.PropertyField(minecraftMode, new GUIContent("Minecraft Mode"));
         Subdivisions.intValue = EditorGUILayout.DelayedIntField(new GUIContent("Edges per Axis Unit"), Subdivisions.intValue);
 
         EditorGUILayout.PropertyField(GroundMaterial, new GUIContent("Ground Material"));
@@ -125,7 +126,7 @@ public class TerrainGeneratorEditor : Editor
             ((TerrainGenerator)target).InitializeGridMultipliersLength();
         }
 
-        EditorGUILayout.PropertyField(gridMultipliers, new GUIContent("Grid Multipliers", "Each element is a slot in the grid. Element #0 is (0, 0). Increases by X first and then by Z."));
+        EditorGUILayout.PropertyField(gridMultipliers, new GUIContent("Grid Multipliers (Doesn't work 100% Properly, use with caution!)", "Each element is a slot in the grid. Element #0 is (0, 0). Increases by X first and then by Z."));
 
         if (!minecraftMode.boolValue)
         {
@@ -142,12 +143,12 @@ public class TerrainGeneratorEditor : Editor
         }
         else
         {
-            EditorGUILayout.LabelField(new GUIContent("Coming soon!"));
+            //EditorGUILayout.LabelField(new GUIContent("Coming soon!"));
 
-            // Box Height
-            // GenerateMinecraftTerrain button
+            //// Box Height
+            //// GenerateMinecraftTerrain button
 
-            EditorGUILayout.EndVertical();
+            //EditorGUILayout.EndVertical();
         }
 
         serializedObject.ApplyModifiedProperties();

@@ -94,7 +94,7 @@ public class TerrainGenerator : MonoBehaviour
         xEdges = xSize * Subdivisions;
         zEdges = zSize * Subdivisions;
 
-        Debug.LogFormat("X: {0} - Z:{1}", xEdges, zEdges);
+        // Debug.LogFormat("X: {0} - Z:{1}", xEdges, zEdges);
 
         xVertices = xEdges + 1;
         zVertices = zEdges + 1;
@@ -112,7 +112,7 @@ public class TerrainGenerator : MonoBehaviour
 
                 int gridIndex = GetGridIndex(xValue, zValue);
                 PerlinMultiplier = gridMultipliers[gridIndex];
-                Debug.Log(PerlinMultiplier);
+                //Debug.Log(PerlinMultiplier);
                 y = PerlinMultiplier * heightMultiplier * Mathf.PerlinNoise(xValue + div, zValue + div);
 
                 vertices[currentIndex] = new Vector3(xValue, y, zValue);
@@ -165,14 +165,14 @@ public class TerrainGenerator : MonoBehaviour
             if (x < xEdges / ix)
             {
                 //Debug.LogFormat("X: {0} - Div: {1}", x, (xEdges / ix));
-                Debug.Log("x1");
+                //Debug.Log("x1");
                 column = xGridSize - ix;
                 break;
             }
             else if (Mathf.Approximately(x, xEdges / ix))
             {
                 //Debug.LogFormat("X: {0} - Div: {1}", x, (xEdges / ix));
-                Debug.Log("x2");
+                //Debug.Log("x2");
                 column = xGridSize - ix + 1;
                 break;
             }
@@ -184,14 +184,14 @@ public class TerrainGenerator : MonoBehaviour
             if (z < zEdges / iz)
             {
                 //Debug.LogFormat("Z: {0} - Div: {1}", z, (zEdges / iz));
-                Debug.Log("z1");
+                //Debug.Log("z1");
                 row = zGridSize - iz;
                 break;
             }
             else if (Mathf.Approximately(z, zEdges / iz))
             {
                 //Debug.LogFormat("Z: {0} - Div: {1}", z, (zEdges / iz));
-                Debug.Log("z2");
+                //Debug.Log("z2");
                 row = zGridSize - iz + 1;
                 break;
             }
@@ -209,7 +209,7 @@ public class TerrainGenerator : MonoBehaviour
 
         indexToReturn = column + (row * xGridSize);
 
-        Debug.LogFormat("XZ: {0}, {1} - Column: {2} - Row: {3} - Index: {4}", x, z, column, row, indexToReturn);
+        // Debug.LogFormat("XZ: {0}, {1} - Column: {2} - Row: {3} - Index: {4}", x, z, column, row, indexToReturn);
         return indexToReturn;
     }
 
